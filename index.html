@@ -3,107 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Workout Logger</title>
+    <title>My Cloud Workout Logger</title>
     <style>
-        * {
-            box-sizing: border-box;
-        }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0f2f5;
-            color: #333;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-        }
-        .container {
-            background: #ffffff;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 500px;
-        }
-        h1 {
-            text-align: center;
-            color: #1a73e8;
-            margin-top: 0;
-        }
-        form {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-        .input-group {
-            display: flex;
-            gap: 10px;
-        }
-        input {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            font-size: 16px;
-        }
-        button {
-            padding: 12px;
-            background-color: #1a73e8;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-            transition: background-color 0.2s;
-        }
-        button:hover {
-            background-color: #1557b0;
-        }
-        h2 {
-            font-size: 1.2rem;
-            border-bottom: 2px solid #f0f2f5;
-            padding-bottom: 10px;
-        }
-        #workout-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-        .workout-card {
-            background: #f8f9fa;
-            border-left: 5px solid #1a73e8;
-            margin-bottom: 15px;
-            padding: 15px;
-            border-radius: 6px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .workout-info strong {
-            display: block;
-            font-size: 1.1rem;
-            margin-bottom: 5px;
-        }
-        .workout-info span {
-            color: #555;
-            font-size: 0.9rem;
-        }
-        .delete-btn {
-            background-color: #ea4335;
-            padding: 8px 12px;
-            font-size: 14px;
-        }
-        .delete-btn:hover {
-            background-color: #b31404;
-        }
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; color: #333; margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .container { background: #ffffff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); width: 100%; max-width: 500px; }
+        h1 { text-align: center; color: #1a73e8; margin-top: 0; }
+        form { display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px; }
+        .input-group { display: flex; gap: 10px; }
+        input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; }
+        button { padding: 12px; background-color: #1a73e8; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: bold; transition: background-color 0.2s; }
+        button:hover { background-color: #1557b0; }
+        h2 { font-size: 1.2rem; border-bottom: 2px solid #f0f2f5; padding-bottom: 10px; }
+        #workout-list { list-style: none; padding: 0; margin: 0; }
+        .workout-card { background: #f8f9fa; border-left: 5px solid #1a73e8; margin-bottom: 15px; padding: 15px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; }
+        .workout-info strong { display: block; font-size: 1.1rem; margin-bottom: 5px; }
+        .workout-info span { color: #555; font-size: 0.9rem; }
+        .delete-btn { background-color: #ea4335; padding: 8px 12px; font-size: 14px; }
+        .delete-btn:hover { background-color: #b31404; }
+        .loading { text-align: center; color: #666; font-style: italic; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Workout Logger</h1>
+    <h1>Cloud Workout Logger</h1>
     
     <form id="workout-form">
         <input type="text" id="exercise" placeholder="Exercise (e.g., Bench Press)" required>
@@ -114,97 +38,122 @@
             <input type="number" id="weight" placeholder="Weight (lbs/kg)" min="0" required>
         </div>
         
-        <button type="submit">Log Workout</button>
+        <button type="submit" id="submit-btn">Log Workout</button>
     </form>
 
     <h2>Recent Workouts</h2>
+    <div id="loading-message" class="loading">Connecting to database...</div>
     <ul id="workout-list">
         </ul>
 </div>
 
-<script>
+<script type="module">
+    // 1. Import Firebase functions directly from the cloud CDN
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-analytics.js";
+    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, orderBy, query } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+    // 2. Your specific Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyA4c734ECv-7uwbIbMQsnS3id68H-R4iOs",
+      authDomain: "my-workout-logger-b0708.firebaseapp.com",
+      projectId: "my-workout-logger-b0708",
+      storageBucket: "my-workout-logger-b0708.firebasestorage.app",
+      messagingSenderId: "764803594023",
+      appId: "1:764803594023:web:63960dbbacb1bc4a7d1b02",
+      measurementId: "G-YPR1GP6L5Q"
+    };
+
+    // 3. Initialize Firebase, Analytics, and Firestore
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const db = getFirestore(app);
+
     // DOM Elements
     const workoutForm = document.getElementById('workout-form');
     const workoutList = document.getElementById('workout-list');
+    const loadingMessage = document.getElementById('loading-message');
+    const submitBtn = document.getElementById('submit-btn');
 
-    // Load workouts from local storage when the page loads
-    document.addEventListener('DOMContentLoaded', displayWorkouts);
+    // Load workouts when the page starts
+    document.addEventListener('DOMContentLoaded', fetchAndDisplayWorkouts);
 
-    // Add Workout Event
-    workoutForm.addEventListener('submit', function(e) {
+    // Handle Form Submission
+    workoutForm.addEventListener('submit', async function(e) {
         e.preventDefault();
+        submitBtn.innerText = "Saving...";
+        submitBtn.disabled = true;
 
-        // Get values from inputs
-        const exercise = document.getElementById('exercise').value;
-        const sets = document.getElementById('sets').value;
-        const reps = document.getElementById('reps').value;
-        const weight = document.getElementById('weight').value;
-        const date = new Date().toLocaleDateString();
-
-        // Create workout object
         const workout = {
-            id: Date.now(),
-            exercise,
-            sets,
-            reps,
-            weight,
-            date
+            exercise: document.getElementById('exercise').value,
+            sets: document.getElementById('sets').value,
+            reps: document.getElementById('reps').value,
+            weight: document.getElementById('weight').value,
+            date: new Date().toLocaleDateString(),
+            timestamp: Date.now() 
         };
 
-        // Save to local storage and update UI
-        addWorkoutToStorage(workout);
-        displayWorkouts();
-        
-        // Reset form
-        workoutForm.reset();
+        try {
+            await addDoc(collection(db, "workouts"), workout);
+            workoutForm.reset();
+            await fetchAndDisplayWorkouts();
+        } catch (error) {
+            console.error("Error adding document: ", error);
+            alert("Failed to save workout. Ensure your Firestore Database is in 'Test Mode'.");
+        } finally {
+            submitBtn.innerText = "Log Workout";
+            submitBtn.disabled = false;
+        }
     });
 
-    function addWorkoutToStorage(workout) {
-        let workouts = getWorkoutsFromStorage();
-        workouts.push(workout);
-        localStorage.setItem('workouts', JSON.stringify(workouts));
-    }
-
-    function getWorkoutsFromStorage() {
-        let workouts;
-        if (localStorage.getItem('workouts') === null) {
-            workouts = [];
-        } else {
-            workouts = JSON.parse(localStorage.getItem('workouts'));
-        }
-        return workouts;
-    }
-
-    function displayWorkouts() {
-        const workouts = getWorkoutsFromStorage();
-        
-        // Clear current list
+    // Fetch from Firestore and Display
+    async function fetchAndDisplayWorkouts() {
         workoutList.innerHTML = '';
+        loadingMessage.style.display = 'block';
 
-        // Generate HTML for each workout
-        workouts.forEach(function(workout) {
-            const li = document.createElement('li');
-            li.className = 'workout-card';
-            li.innerHTML = `
-                <div class="workout-info">
-                    <strong>${workout.exercise}</strong>
-                    <span>${workout.sets} sets × ${workout.reps} reps @ ${workout.weight} | ${workout.date}</span>
-                </div>
-                <button class="delete-btn" onclick="deleteWorkout(${workout.id})">Delete</button>
-            `;
-            workoutList.appendChild(li);
-        });
+        try {
+            const q = query(collection(db, "workouts"), orderBy("timestamp", "desc"));
+            const querySnapshot = await getDocs(q);
+            
+            loadingMessage.style.display = 'none';
+
+            querySnapshot.forEach((docSnap) => {
+                const workout = docSnap.data();
+                const docId = docSnap.id; 
+                
+                const li = document.createElement('li');
+                li.className = 'workout-card';
+                li.innerHTML = `
+                    <div class="workout-info">
+                        <strong>${workout.exercise}</strong>
+                        <span>${workout.sets} sets × ${workout.reps} reps @ ${workout.weight} | ${workout.date}</span>
+                    </div>
+                    <button class="delete-btn" data-id="${docId}">Delete</button>
+                `;
+                workoutList.appendChild(li);
+            });
+
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const idToDelete = e.target.getAttribute('data-id');
+                    await removeWorkout(idToDelete);
+                });
+            });
+
+        } catch (error) {
+            console.error("Error getting documents: ", error);
+            loadingMessage.innerText = "Error loading workouts. Did you create the Firestore database?";
+        }
     }
 
-    function deleteWorkout(id) {
-        let workouts = getWorkoutsFromStorage();
-        
-        // Filter out the deleted workout
-        workouts = workouts.filter(workout => workout.id !== id);
-        
-        // Update local storage and UI
-        localStorage.setItem('workouts', JSON.stringify(workouts));
-        displayWorkouts();
+    // Delete from Firestore
+    async function removeWorkout(id) {
+        try {
+            await deleteDoc(doc(db, "workouts", id));
+            fetchAndDisplayWorkouts(); 
+        } catch (error) {
+            console.error("Error deleting document: ", error);
+        }
     }
 </script>
 
