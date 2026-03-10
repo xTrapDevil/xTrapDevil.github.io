@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Cloud Workout Logger</title>
     <style>
-        /* Modern, Dark Mode Fitness Theme */
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         
         body { 
@@ -37,8 +36,8 @@
             -webkit-text-fill-color: transparent; 
         }
 
+        .input-group, .auth-buttons { display: flex; gap: 10px; }
         form { display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px; }
-        .input-group { display: flex; gap: 10px; }
         
         input { 
             width: 100%; 
@@ -48,18 +47,13 @@
             border: 1px solid #3d3d3d; 
             border-radius: 8px; 
             font-size: 16px; 
-            transition: border-color 0.3s, box-shadow 0.3s;
+            transition: border-color 0.3s;
+            margin-bottom: 10px;
         }
-
-        input::placeholder { color: #888; }
-        
-        input:focus {
-            outline: none;
-            border-color: #4facfe;
-            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.2);
-        }
+        input:focus { outline: none; border-color: #4facfe; }
 
         button { 
+            width: 100%;
             padding: 14px; 
             background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
             color: #121212; 
@@ -69,128 +63,155 @@
             font-size: 16px; 
             font-weight: 800; 
             text-transform: uppercase;
-            letter-spacing: 1px;
-            transition: transform 0.2s, box-shadow 0.2s; 
+            transition: transform 0.2s; 
         }
-
-        button:hover { 
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 242, 254, 0.4);
-        }
-
-        button:active { transform: translateY(0); }
-        button:disabled { background: #555; color: #888; cursor: not-allowed; box-shadow: none; transform: none; }
-
-        h2 { 
-            font-size: 1.2rem; 
-            color: #ffffff;
-            border-bottom: 2px solid #333; 
-            padding-bottom: 10px; 
-            margin-bottom: 20px;
-        }
-
-        #workout-list { list-style: none; padding: 0; margin: 0; }
+        button:hover { transform: translateY(-2px); }
         
-        .workout-card { 
-            background: #252525; 
-            border-left: 5px solid #00f2fe; 
-            margin-bottom: 15px; 
-            padding: 15px 20px; 
-            border-radius: 8px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-            transition: transform 0.2s;
-        }
+        .secondary-btn { background: #2c2c2c; color: #4facfe; border: 1px solid #4facfe; }
 
-        .workout-card:hover { transform: translateX(4px); }
-
-        .workout-info strong { 
-            display: block; 
-            font-size: 1.2rem; 
-            color: #ffffff;
-            margin-bottom: 4px; 
-        }
-
+        h2 { font-size: 1.2rem; color: #ffffff; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px; }
+        
+        #workout-list { list-style: none; padding: 0; margin: 0; }
+        .workout-card { background: #252525; border-left: 5px solid #00f2fe; margin-bottom: 15px; padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .workout-info strong { display: block; font-size: 1.2rem; color: #ffffff; margin-bottom: 4px; }
         .workout-info span { color: #aaaaaa; font-size: 0.95rem; }
         
-        .delete-btn { 
-            background: #ff4b4b; 
-            color: white;
-            padding: 8px 14px; 
-            font-size: 12px; 
-            border-radius: 6px;
-            font-weight: bold;
-            text-transform: none;
-            letter-spacing: normal;
-        }
+        .delete-btn { background: #ff4b4b; color: white; padding: 8px 14px; font-size: 12px; border-radius: 6px; font-weight: bold; width: auto; text-transform: none; }
+        .delete-btn:hover { background: #ff1c1c; }
 
-        .delete-btn:hover { 
-            background: #ff1c1c; 
-            box-shadow: 0 4px 12px rgba(255, 75, 75, 0.4);
-        }
-
-        .loading { text-align: center; color: #4facfe; font-style: italic; font-weight: bold; margin-top: 10px; }
+        /* Hide app initially */
+        #app-container { display: none; }
+        
+        .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .logout-btn { background: transparent; color: #ff4b4b; width: auto; padding: 5px 10px; font-size: 14px; text-transform: none; border: 1px solid #ff4b4b; }
+        
+        .error-msg { color: #ff4b4b; text-align: center; font-size: 14px; margin-top: -10px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Log Workout</h1>
     
-    <form id="workout-form">
-        <input type="text" id="exercise" placeholder="Exercise (e.g., Bench Press)" required>
+    <div id="auth-container">
+        <h1>Welcome</h1>
+        <p style="text-align: center; color: #aaa; margin-bottom: 20px;">Sign in to view your workouts</p>
         
-        <div class="input-group">
-            <input type="number" id="sets" placeholder="Sets" min="1" required>
-            <input type="number" id="reps" placeholder="Reps" min="1" required>
-            <input type="number" id="weight" placeholder="Weight (lbs/kg)" min="0" required>
+        <input type="email" id="email" placeholder="Email Address" required>
+        <input type="password" id="password" placeholder="Password" required>
+        <div id="auth-error" class="error-msg"></div>
+
+        <div class="auth-buttons">
+            <button id="login-btn">Log In</button>
+            <button id="signup-btn" class="secondary-btn">Sign Up</button>
+        </div>
+    </div>
+
+    <div id="app-container">
+        <div class="header-bar">
+            <h1 style="margin: 0; font-size: 1.5rem;">Log Workout</h1>
+            <button id="logout-btn" class="logout-btn">Log Out</button>
         </div>
         
-        <button type="submit" id="submit-btn">Log It</button>
-    </form>
+        <form id="workout-form">
+            <input type="text" id="exercise" placeholder="Exercise (e.g., Bench Press)" required>
+            
+            <div class="input-group">
+                <input type="number" id="sets" placeholder="Sets" min="1" required>
+                <input type="number" id="reps" placeholder="Reps" min="1" required>
+                <input type="number" id="weight" placeholder="Weight" min="0" required>
+            </div>
+            
+            <button type="submit" id="submit-btn">Log It</button>
+        </form>
 
-    <h2>Recent Activity</h2>
-    <div id="loading-message" class="loading">Syncing with cloud...</div>
-    <ul id="workout-list">
-        </ul>
+        <h2>My Activity</h2>
+        <div id="loading-message" style="text-align:center; color:#4facfe;">Syncing...</div>
+        <ul id="workout-list"></ul>
+    </div>
+
 </div>
 
 <script type="module">
-    // 1. Import Firebase functions directly from the cloud CDN
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-analytics.js";
-    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, orderBy, query } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, orderBy, query, where } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+    // 1. Import new Auth functions
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
-    // 2. Your specific Firebase configuration
+    // 🛑 PASTE YOUR FIREBASE CONFIG KEYS HERE 🛑
     const firebaseConfig = {
       apiKey: "AIzaSyA4c734ECv-7uwbIbMQsnS3id68H-R4iOs",
       authDomain: "my-workout-logger-b0708.firebaseapp.com",
       projectId: "my-workout-logger-b0708",
       storageBucket: "my-workout-logger-b0708.firebasestorage.app",
       messagingSenderId: "764803594023",
-      appId: "1:764803594023:web:63960dbbacb1bc4a7d1b02",
-      measurementId: "G-YPR1GP6L5Q"
+      appId: "1:764803594023:web:63960dbbacb1bc4a7d1b02"
     };
 
-    // 3. Initialize Firebase, Analytics, and Firestore
     const app = initializeApp(firebaseConfig);
-    const analytics = getAnalytics(app);
     const db = getFirestore(app);
+    const auth = getAuth(app); // Initialize Auth
 
-    // DOM Elements
-    const workoutForm = document.getElementById('workout-form');
+    // UI Elements
+    const authContainer = document.getElementById('auth-container');
+    const appContainer = document.getElementById('app-container');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const authError = document.getElementById('auth-error');
     const workoutList = document.getElementById('workout-list');
     const loadingMessage = document.getElementById('loading-message');
-    const submitBtn = document.getElementById('submit-btn');
 
-    // Load workouts when the page starts
-    document.addEventListener('DOMContentLoaded', fetchAndDisplayWorkouts);
+    let currentUser = null; // Keeps track of who is logged in
 
-    // Handle Form Submission
-    workoutForm.addEventListener('submit', async function(e) {
+    // --- AUTHENTICATION LOGIC ---
+
+    // Listen for login/logout changes
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            currentUser = user;
+            authContainer.style.display = "none";
+            appContainer.style.display = "block";
+            fetchAndDisplayWorkouts(); // Fetch only this user's data
+        } else {
+            currentUser = null;
+            authContainer.style.display = "block";
+            appContainer.style.display = "none";
+        }
+    });
+
+    // Sign Up
+    document.getElementById('signup-btn').addEventListener('click', async () => {
+        try {
+            await createUserWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
+            authError.innerText = "";
+        } catch (error) {
+            authError.innerText = error.message.replace("Firebase: ", "");
+        }
+    });
+
+    // Log In
+    document.getElementById('login-btn').addEventListener('click', async () => {
+        try {
+            await signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
+            authError.innerText = "";
+        } catch (error) {
+            authError.innerText = "Invalid email or password.";
+        }
+    });
+
+    // Log Out
+    document.getElementById('logout-btn').addEventListener('click', async () => {
+        await signOut(auth);
+        emailInput.value = "";
+        passwordInput.value = "";
+    });
+
+    // --- WORKOUT LOGIC ---
+
+    document.getElementById('workout-form').addEventListener('submit', async function(e) {
         e.preventDefault();
+        if (!currentUser) return;
+
+        const submitBtn = document.getElementById('submit-btn');
         submitBtn.innerText = "Saving...";
         submitBtn.disabled = true;
 
@@ -200,29 +221,34 @@
             reps: document.getElementById('reps').value,
             weight: document.getElementById('weight').value,
             date: new Date().toLocaleDateString(),
-            timestamp: Date.now() 
+            timestamp: Date.now(),
+            userId: currentUser.uid // IMPORTANT: Tag the workout with this user's ID
         };
 
         try {
             await addDoc(collection(db, "workouts"), workout);
-            workoutForm.reset();
+            document.getElementById('workout-form').reset();
             await fetchAndDisplayWorkouts();
         } catch (error) {
             console.error("Error adding document: ", error);
-            alert("Failed to save workout. Ensure your Firestore Database is in 'Test Mode'.");
         } finally {
             submitBtn.innerText = "Log It";
             submitBtn.disabled = false;
         }
     });
 
-    // Fetch from Firestore and Display
     async function fetchAndDisplayWorkouts() {
+        if (!currentUser) return;
         workoutList.innerHTML = '';
         loadingMessage.style.display = 'block';
 
         try {
-            const q = query(collection(db, "workouts"), orderBy("timestamp", "desc"));
+            // IMPORTANT: Only get workouts where userId matches the logged-in user
+            const q = query(
+                collection(db, "workouts"), 
+                where("userId", "==", currentUser.uid), 
+                orderBy("timestamp", "desc")
+            );
             const querySnapshot = await getDocs(q);
             
             loadingMessage.style.display = 'none';
@@ -236,7 +262,7 @@
                 li.innerHTML = `
                     <div class="workout-info">
                         <strong>${workout.exercise}</strong>
-                        <span>${workout.sets} sets × ${workout.reps} reps @ ${workout.weight} | ${workout.date}</span>
+                        <span>${workout.sets} sets × ${workout.reps} reps @ ${workout.weight}</span>
                     </div>
                     <button class="delete-btn" data-id="${docId}">Delete</button>
                 `;
@@ -246,23 +272,14 @@
             document.querySelectorAll('.delete-btn').forEach(btn => {
                 btn.addEventListener('click', async (e) => {
                     const idToDelete = e.target.getAttribute('data-id');
-                    await removeWorkout(idToDelete);
+                    await deleteDoc(doc(db, "workouts", idToDelete));
+                    fetchAndDisplayWorkouts();
                 });
             });
 
         } catch (error) {
             console.error("Error getting documents: ", error);
-            loadingMessage.innerText = "Error loading workouts. Did you create the Firestore database?";
-        }
-    }
-
-    // Delete from Firestore
-    async function removeWorkout(id) {
-        try {
-            await deleteDoc(doc(db, "workouts", id));
-            fetchAndDisplayWorkouts(); 
-        } catch (error) {
-            console.error("Error deleting document: ", error);
+            loadingMessage.innerText = "Note: Database might need an index. Check the console.";
         }
     }
 </script>
